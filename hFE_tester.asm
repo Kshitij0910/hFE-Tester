@@ -129,7 +129,7 @@ DIGIT_hFE   DB 3 DUP(0)
         ;input V = 4
     v3: cmp bl, 4
         jnz v4 
-        mov al, `102
+        mov al, 102
         out PORT2A, al
         jmp endv
         
@@ -349,6 +349,25 @@ DIGIT_hFE   DB 3 DUP(0)
 	sub1 endp
 ;the delay has been introduced to take into consideration the
 ;the time taken for 7-segment display to respond
+
+;Procedure to set alarm----------------------------------------------------------
+    alarm proc near
+        lea si, hFE_Avg
+        mov al, [si]
+        cmp al, 20
+        jnb np
+        mov al, 05h ;set PC2 0_000_010_1
+        out CREG2, al
+        
+        call delay_2ms
+        mov al, 04h
+        mov CREG2, al
+    np: mov cx, 10
+    z3: call delay_2ms
+        loop z3
+        ret
+    alarm endp    
+        
         
         
     
