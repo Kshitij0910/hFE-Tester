@@ -316,6 +316,40 @@ DIGIT_hFE   DB 3 DUP(0)
         lea si, DIGIT_hFE   ;123 --> 03
         mov al, [si]
         
+;intialise porta as input & portb, portc as output
+        mov al,90h  ;1-> i/o mode 
+                    ;_00 -> mode 0
+                    ; 1 -> i/p
+                    ; 1 -> upper port C o/p lookup
+                    ; 000 -> port B mode 0 o/p port C lower o/p
+		out CREG1,al 
+     x2:mov cx,3
+		mov bl,11111011b
+		mov bh,[si]
+     x1:mov al,bl       ;al = 1
+		out PORT1C,al      ;port c
+		mov al,bh       ;al = 1
+		out PORT1B,al      ;port b -->    
+		call sub1 
+		ror bl,1
+		inc si
+		loop x1
+;loop 
+        jmp x2
+        ret
+      display endp
+
+
+    sub1 proc near:
+        push cx
+        mov  cx,10 ; delay generated will be approx 0.45 secs
+    x3:	loop x3 
+        pop  cx
+		ret
+	sub1 endp
+;the delay has been introduced to take into consideration the
+;the time taken for 7-segment display to respond
+        
         
     
 
@@ -332,66 +366,5 @@ DIGIT_hFE   DB 3 DUP(0)
 
 end  
 
-#make_bin#
-
-#LOAD_SEGMENT=FFFFh#
-#LOAD_OFFSET=0000h#
-
-#CS=0000h#
-#IP=0000h#
-
-#DS=0000h#
-#ES=0000h#
-
-#SS=0000h#
-#SP=FFFEh#
-
-#AX=0000h#
-#BX=0000h#
-#CX=0000h#
-#DX=0000h#
-#SI=0000h#
-#DI=0000h#
-#BP=0000h#
-
-; add your code here
-         jmp     st1 
-         db     1021 dup(0)
-;main program
-          
-st1:      cli 
-; intialize ds, es,ss to start of RAM
-          mov       ax,0200h
-          mov       ds,ax
-          mov       es,ax
-          mov       ss,ax
-          mov       sp,0FFFEH
-;intialise porta as input & portb, portc as output
-          mov       al,90h  ;1-> i/o mode 
-                            ;_00 -> mode 0
-                            ; 1 -> i/p
-                            ; 1 -> upper port C o/p lookup
-                            ; 000 -> port B mode 0 o/p port C lower o/p
-		  out 		CREG1,al 
-x2:		  mov		cx,3
-		  mov		bl,11111011b
-		  mov		bh,[si]
-x1:		  mov		al,bl       ;al = 1
-		  out		PORT1C,al      ;port c
-		  mov		al,bh       ;al = 1
-		  out		PORT1B,al      ;port b -->    
-		  call      sub1 
-		  ror		bl,1
-		  inc		si
-		  loop		x1
-;loop 
-          jmp       x2
 
 
-sub1:	  push      cx
-          mov		cx,10 ; delay generated will be approx 0.45 secs
-x3:		  loop		x3 
-          pop       cx
-		  ret
-;the delay has been introduced to take into consideration the
-;the time taken for 7-segment display to respond
