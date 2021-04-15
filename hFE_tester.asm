@@ -3,7 +3,7 @@
 ;-------------------------------------------------------------------------------------------------
 
 .MODEL TINY
-.DATA;--------------------------------------------------------------------------------------------
+.DATA
 
 ;Total No of experiments to be conducted = 10
 cnt         EQU 10
@@ -38,7 +38,7 @@ CREG2       EQU 16H
 
 
 
-.CODE;--------------------------------------------------------------------------------------------
+.CODE
 .STARTUP 
         ;Initializing 8253
         mov al, 00010110b 
@@ -91,62 +91,62 @@ CREG2       EQU 16H
         ;input V = 2
     v1: cmp ch, 2 
         jnz v2
-        mov al, 51
+        mov al, 50
         out PORT2A, al
         jmp endv
         
         ;input V = 3
     v2: cmp ch, 3
         jnz v3
-        mov al, 76
+        mov al, 75
         out PORT2A, al
         jmp endv
         
         ;input V = 4
     v3: cmp ch, 4
         jnz v4 
-        mov al, 102
+        mov al, 100
         out PORT2A, al
         jmp endv
         
         ;input V = 5
     v4: cmp ch, 5
         jnz v5
-        mov al, 127
+        mov al, 125
         out PORT2A, al
         jmp endv
         
         ;input V = 6
     v5: cmp ch, 6
         jnz v6
-        mov al, 153
+        mov al, 150
         out PORT2A, al
         jmp endv
         
         ;input V = 7
     v6: cmp ch, 7
         jnz v7
-        mov al, 178
+        mov al, 175
         out PORT2A, al
         jmp endv 
         
         ;input V = 8
     v7: cmp ch, 8 
         jnz v8
-        mov al, 204
+        mov al, 200
         out PORT2A, al
         jmp endv    
         
         ;input V = 9
     v8: cmp ch, 9  
         jnz v9
-        mov al, 229
+        mov al, 225
         out PORT2A, al
         jmp endv    
         
         ;input V = 10
     v9: cmp ch, 10
-        mov al, 255
+        mov al, 250
         out PORT2A, al
     endv:ret
     send_voltage endp
@@ -376,7 +376,7 @@ CREG2       EQU 16H
     dlp:nop
         loop dlp
         ret
-    delay_2ms endp;     
+    delay_2ms endp     
         
             
         
