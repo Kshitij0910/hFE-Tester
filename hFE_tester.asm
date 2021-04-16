@@ -1,5 +1,28 @@
 #make_bin#
 
+#LOAD_SEGMENT=0500h#
+#LOAD_OFFSET=0000h#
+
+; set entry point:
+#CS=0500h#	; same as loading segment
+#IP=0000h#	; same as loading offset
+
+; set segment registers
+#DS=0500h#	; same as loading segment
+#ES=0500h#	; same as loading segment
+
+; set stack
+#SS=0500h#	; same as loading segment
+#SP=FFFEh#	; set to top of loading segment
+
+; set general registers (optional)
+#AX=0000h#
+#BX=0000h#         
+#CX=0000h#
+#DX=0000h#
+#SI=0000h#
+#DI=0000h#
+#BP=0000h#
 ;-------------------------------------------------------------------------------------------------
 
 .MODEL TINY
@@ -14,7 +37,8 @@ hFE_Sum     DW  00
 ;Average value of hFE
 hFE_Avg     DB  00
 ;Store digits of hFE_Avg
-DIGIT_hFE   DB 3 DUP(0)
+;DIGIT_hFE   DB 3 DUP(0) 
+DIGIT_hFE   DB 03, 02, 01
  
 
 ;Using 8253 to generate clock signals
@@ -25,7 +49,7 @@ CREG EQU 26H
 ;Initializing 8255(1)
 PORT1A      EQU 00H
 PORT1B      EQU 02H
-PORT1C      EQU 04H ;Upper port --> row, Lower port --> column
+PORT1C      EQU 04H 
 CREG1       EQU 06H
 
 ;ADC converter
@@ -40,6 +64,9 @@ CREG2       EQU 16H
 
 .CODE
 .STARTUP 
+        mov curCt, 1
+        mov hFE_Sum, 0
+        mov hFE_Avg, 0
         ;Initializing 8253
         mov al, 00010110b 
         out CREG, al 
@@ -57,8 +84,10 @@ CREG2       EQU 16H
         
         
         
- again: call send_voltage       ;send this V
-        call get_voltage_drop   ;get Vd
+ again: call send_voltage       ;send this V  
+        call delay_2ms
+        call get_voltage_drop   ;get Vd  
+        call delay_2ms
         call curr_hFE
         
         cmp curCt, 10
@@ -67,7 +96,8 @@ CREG2       EQU 16H
         jmp again
         
  next:  call avg_hFE
-        call alarm
+        call alarm   
+        call delay_2ms
         call save_digits
         call display
          
@@ -77,7 +107,7 @@ CREG2       EQU 16H
 .EXIT
 
 ;Procedure for sending voltage to DI device-------------------------------------------------------
-    ;We are sending multiple of 25.5 to DI device through DAC. 
+    ;We are sending multiple of 25 to DI device through DAC. 
     send_voltage proc near
         mov ch, curCt
         
@@ -162,17 +192,17 @@ CREG2       EQU 16H
         ;select Input Channel IN0
         mov al, 06h     ;PC3 = 0
         out CREG2, al
-        ;delay              
+        call delay_2ms              
                       
         ;reset ALE signal
         mov al, 00h     ;PC0   8255 PC0 --> ALEbar ADC
         out CREG2, al
-        ;delay
+        call delay_2ms
         
         ;reset SOC signal
         mov al, 02h     ;PC1
         out CREG2, al         
-        ;delay
+        
         
         ;check this piece of code
         mov al, 01h     ;0_000_000_1 PC0 = 1 set ALE
@@ -204,7 +234,9 @@ CREG2       EQU 16H
 
 
 ;Procedure to calculate curr_hFE------------------------------------------------------------------
-    curr_hFE proc near
+    curr_hFE proc near 
+        mov ch, curCt
+        
         cmp ch, 1
         jnz ch1
         mov bx, 1000    ;hFE = (Vd * 1000)/V, V = 1, we are calculating 1000/V
@@ -258,8 +290,8 @@ CREG2       EQU 16H
          lea si, hFE_Sum
          add [si], ax
          
-         lea di, curCt
-         inc BYTE PTR[di]
+         ;lea di, curCt
+         ;inc BYTE PTR[di]
          
          jmp e1
          
@@ -307,33 +339,36 @@ CREG2       EQU 16H
 
 ;Procedure to display on 7seg----------------------------------------------------------------------
      display proc near
-        lea si, DIGIT_hFE   ;123 --> 03
-        mov al, [si]
+
         
         ;Intialise porta as input & portb, portc as output
-        mov al,90h  ;1-> i/o mode 
-                    ;00 -> mode 0
-                    ;1 -> i/p
-                    ;1 -> upper port C o/p lookup
-                    ;000 -> port B mode 0 o/p port C lower o/p
+	mov al,90h  ;1-> i/o mode 
+		    ;00 -> mode 0
+		    ;1 -> i/p
+		    ;1 -> upper port C o/p lookup
+		    ;000 -> port B mode 0 o/p port C lower o/p
 		out CREG1,al 
      x2:mov cx,3
-		mov bl,11111011b
-		mov bh,[si]
+		mov bl,00000001b
+		lea si,DIGIT_hFE	
+
      x1:mov al,bl       ;al = 1
 		out PORT1C,al   ;port c
-		mov al,bh       ;al = 1
+		mov al,[si]       ;al = 1
 		out PORT1B,al   ;port b    
-		call sub1 
-		ror bl,1
+		call sub1
+		call sub1
+		call sub1
+		call sub1
+		rol bl,1
 		inc si
 		loop x1
  
-        jmp x2
-        ret
-      display endp
-
-
+	jmp x2
+	ret
+      display endp 
+     
+    
     sub1 proc near
         push cx
         mov  cx,10 ; delay generated will be approx 0.45 secs
@@ -341,8 +376,6 @@ CREG2       EQU 16H
         pop  cx
 		ret
 	sub1 endp
-    ;the delay has been introduced to take into consideration the
-    ;the time taken for 7-segment display to respond  
     
     
     
